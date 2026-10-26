@@ -1,0 +1,24 @@
+(()=>{const P=window.POSTS,L=window.LINKS,$=s=>document.querySelector(s),M=$("#main"),CATS=["TOUGE","STREET","TRACK","MEETS"];
+const e=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),v=s=>e(s)||"—",src=n=>`img/${n}.jpg`;
+const item=p=>`<a class="it" href="#/post/${p.id}"><div class="im"><img src="${src(p.photos[0])}" alt="${e(p.title)}" loading="lazy"></div><div class="cap"><b>No.${p.id}</b>${e(p.title)}<i>${e(p.cat)}<br>${v(p.loc)}</i></div></a>`;
+let filter="ALL";
+function home(){const h=P[0];M.innerHTML=`<section class="hero"><img src="${src(h.photos[0])}" alt="${e(h.title)}"><div class="meta"><span>PRIVATE COLLECTION</span><span>${P.length} PUBLICATIONS</span></div><h1>Kolhoz<br>Gang<sup>®</sup></h1></section><p class="tag">UNFILTERED AUTOMOTIVE CULTURE SINCE 2023</p><section class="feed" aria-label="Latest publications">${P.slice(1).map(item).join("")}</section><a class="btn" href="#/archive">Full archive</a>`}
+function archive(){M.innerHTML=`<h2 class="pg">Archive</h2><div class="flt" role="group" aria-label="Filter by category">${["ALL",...CATS].map(c=>`<button aria-pressed="${c==filter}" data-c="${c}">${c}</button>`).join("")}</div><div class="list" id="ls"></div>`;draw();M.querySelector(".flt").onclick=ev=>{const b=ev.target.closest("button");if(!b)return;filter=b.dataset.c;M.querySelectorAll(".flt button").forEach(x=>x.setAttribute("aria-pressed",x==b));draw()}}
+function draw(){const r=P.filter(p=>filter=="ALL"||p.cat==filter);$("#ls").innerHTML=r.length?r.map(p=>`<a class="row" href="#/post/${p.id}"><span>No.${p.id}</span><span class="t">${e(p.title)}</span><img src="${src(p.photos[0])}" alt="" loading="lazy"><span>${e(p.cat)}</span><span>${v(p.date)} / ${v(p.loc)}</span></a>`).join(""):`<p class="empty">No publications in ${filter} yet.</p>`}
+let cur=null,idx=0;
+function post(id){const i=P.findIndex(p=>p.id==id);if(i<0)return nf();const p=P[i],pr=P[i-1],nx=P[i+1];cur=p;
+M.innerHTML=`<img class="cover" src="${src(p.photos[0])}" alt="${e(p.title)}" data-i="0"><div class="pm"><div>No.<b>${p.id}</b></div><div>Category<b>${e(p.cat)}</b></div><div>Location<b>${v(p.loc)}</b></div><div>Date<b>${v(p.date)}</b></div></div><h2 class="pt">${e(p.title)}</h2><p class="cp">${e(p.caption)}</p>${p.photos.length>1?`<div class="ph ${p.photos.length>2?"cols3":""}">${p.photos.slice(1).map((n,k)=>`<img src="${src(n)}" alt="${e(p.title)} — photo ${k+2}" data-i="${k+1}" loading="lazy">`).join("")}</div>`:""}<nav class="pn" aria-label="Publications"><a ${pr?`href="#/post/${pr.id}"`:'aria-hidden="true" style="visibility:hidden"'}><small>Previous</small>${pr?e(pr.title):""}</a><a ${nx?`href="#/post/${nx.id}"`:'aria-hidden="true" style="visibility:hidden"'} style="text-align:right"><small>Next</small>${nx?e(nx.title):""}</a></nav>`;
+M.querySelectorAll("img[data-i]").forEach(im=>{im.tabIndex=0;im.onclick=()=>open(+im.dataset.i);im.onkeydown=k=>{if(k.key=="Enter")open(+im.dataset.i)}})}
+const lb=$("#lb"),li=lb.querySelector("img"),lc=lb.querySelector("p");
+function show(){li.src=src(cur.photos[idx]);li.alt=cur.title;lc.textContent=`No.${cur.id} — ${idx+1}/${cur.photos.length}`}
+function open(i){idx=i;show();lb.hidden=false;lb.querySelector(".x").focus()}
+function close(){lb.hidden=true}function step(d){idx=(idx+d+cur.photos.length)%cur.photos.length;show()}
+lb.onclick=ev=>{const a=ev.target.dataset.a;if(a=="close"||ev.target==lb)close();if(a=="prev")step(-1);if(a=="next")step(1)};
+document.addEventListener("keydown",k=>{if(lb.hidden)return;if(k.key=="Escape")close();if(k.key=="ArrowLeft")step(-1);if(k.key=="ArrowRight")step(1)});
+let sx=0;lb.addEventListener("touchstart",t=>sx=t.touches[0].clientX,{passive:true});lb.addEventListener("touchend",t=>{const d=t.changedTouches[0].clientX-sx;if(Math.abs(d)>50)step(d<0?1:-1)});
+function about(){M.innerHTML=`<h2 class="pg">About</h2><div class="tx"><p>KOLHOZ GANG® is an independent archive of Japanese car culture: touge nights, street cars, track days and meets.</p><p>UNFILTERED AUTOMOTIVE CULTURE SINCE 2023.</p><p>Private collection. Not a shop, not a service.</p></div>`}
+function links(){M.innerHTML=`<h2 class="pg">Links</h2>${L.length?`<div class="ll">${L.map(l=>`<a href="${e(l.url)}" target="_blank" rel="noopener">${e(l.name)}<span>↗</span></a>`).join("")}</div>`:`<p class="empty">No links yet. Add real accounts to LINKS in js/posts.js.</p>`}`}
+function nf(){M.innerHTML=`<h2 class="pg">Not found</h2><a class="btn" href="#/">Back to index</a>`}
+function route(){close();const[,r,a]=location.hash.split("/");(r=="archive"?archive:r=="post"?()=>post(a):r=="about"?about:r=="links"?links:!r?home:nf)();
+document.querySelectorAll("nav a").forEach(x=>x.classList.toggle("on",x.dataset.n==(r||"home")||(r=="post"&&x.dataset.n=="archive")));scrollTo(0,0);document.title=(r=="post"&&cur?`No.${cur.id} ${cur.title} — `:"")+"KOLHOZ GANG®"}
+addEventListener("hashchange",route);route()})();
